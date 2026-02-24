@@ -1,0 +1,42 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url = env("DATABASE_URL")
+}
+
+model User {
+  id          Int          @id @default(autoincrement())
+  name        String       
+  email       String       @unique
+  password    String       // В реальном проекте хешируют, но для тестового ок
+  role        String       // "dispatcher" или "master"
+  requests    Request[]    @relation("AssignedRequests") // Заявки, назначенные на этого мастера
+
+  @@map("users")
+}
+
+model Request {
+  id             Int         @id @default(autoincrement())
+  clientName     String      
+  phone          String      
+  address        String      
+  problemText    String      
+  status         String      // new | assigned | in_progress | done | canceled
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  // Связь с мастером (может быть null)
+  assignedToId   Int?
+  assignedTo     User?       @relation("AssignedRequests", fields: [assignedToId], references: [id])
+
+  @@map("requests")
+}
