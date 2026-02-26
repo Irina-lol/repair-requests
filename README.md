@@ -1,36 +1,123 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🛠 Сервис заявок в ремонтную службу
 
-## Getting Started
+Веб-приложение для приёма и обработки заявок в ремонтную службу. Реализованы две роли: диспетчер и мастер.
 
-First, run the development server:
+## 🚀 Быстрый старт
+
+### Требования
+- Node.js 18+
+- npm или yarn
+
+### Установка и запуск
 
 ```bash
+# Клонировать репозиторий
+git clone https://github.com/Irina-lol/repair-requests.git
+cd repair-requests
+
+# Установить зависимости
+npm install
+
+# Настроить базу данных
+npx prisma migrate dev --name init
+npm run seed
+
+# Запустить в режиме разработки
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Приложение будет доступно по адресу: http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Тестовые пользователи
+Роль	Имя	Email	Пароль
+Диспетчер	Диспетчер Анна	dispatcher@example.com	123456
+Мастер	Мастер Петр	petr@example.com	123456
+Мастер	Мастер Иван	ivan@example.com	123456
+🎯 Функционал
+Для диспетчера
+✅ Просмотр всех заявок
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+✅ Фильтрация по статусу (new, assigned, in_progress, done, canceled)
 
-## Learn More
+✅ Назначение мастера на новую заявку
 
-To learn more about Next.js, take a look at the following resources:
+✅ Отмена заявки
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+✅ Создание новых заявок
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Для мастера
+✅ Просмотр только своих заявок
 
-## Deploy on Vercel
+✅ Разделение по секциям:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+"Назначенные на вас" (ожидают взятия)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+"В работе" (текущие задачи)
+
+"Выполненные" (завершённые)
+
+✅ Взять заявку в работу (с защитой от гонки!)
+
+✅ Завершить заявку
+
+🛡️ Защита от гонки (race condition)
+В действии "Взять в работу" реализована защита от параллельных запросов через транзакции Prisma.
+
+Проверка работы защиты
+Вариант 1: PowerShell скрипт
+powershell
+.\race_test.ps1
+Вариант 2: Node.js скрипт
+bash
+node test-race.js
+Вариант 3: Вручную (два терминала)
+Терминал 1:
+
+bash
+curl -X PATCH http://localhost:3000/api/requests/2 \
+  -H "Content-Type: application/json" \
+  -d '{"action":"take","masterId":2}'
+Терминал 2 (одновременно):
+
+bash
+curl -X PATCH http://localhost:3000/api/requests/2 \
+  -H "Content-Type: application/json" \
+  -d '{"action":"take","masterId":2}'
+Ожидаемый результат: один запрос вернёт 200, второй - 409 Conflict.
+
+🧪 Запуск тестов
+bash
+npm test
+📁 Структура проекта
+text
+repair-requests/
+├── app/                    # Next.js страницы и API
+│   ├── api/               # API эндпоинты
+│   ├── dispatcher/        # Панель диспетчера
+│   ├── master/            # Панель мастера
+│   └── create-request/    # Создание заявки
+├── components/            # React компоненты
+│   └── RequestCard.tsx    # Карточка заявки
+├── lib/                   # Утилиты и типы
+│   ├── auth.ts           # Хук авторизации
+│   ├── prisma.ts         # Prisma клиент
+│   └── types.ts          # TypeScript типы
+├── prisma/                # База данных
+│   ├── schema.prisma     # Схема БД
+│   ├── migrations/       # Миграции
+│   └── seed.ts           # Начальные данные
+├── __tests__/            # Автотесты
+└── public/               # Статические файлы
+🛠 Технологии
+Next.js 16 - фреймворк
+
+Prisma - ORM для работы с БД
+
+SQLite - база данных
+
+TypeScript - типизация
+
+Tailwind CSS - стилизация
+
+date-fns - работа с датами
+
+Jest - тестирование
